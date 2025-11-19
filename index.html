@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <title>Battlefield Portal Workspace 文言→ブロック生成ツール</title>
+  <link rel="stylesheet" href="style.css" type="text/css">
+</head>
+<body>
+  <div class="container">
+    <header class="app-header">
+      <div class="header-container">
+        <h1>BF Portal Workspace 文言ブロック生成ツール</h1>
+        <div class="header-actions">
+          <button class="header-btn" id="btnReadFirst">はじめにお読みください</button>
+          <button class="header-btn" id="btnVersion">バージョン履歴</button>
+        </div>
+      </div>
+    </header>
+    <section>
+      <h2>1. workspace.json を読み込む</h2>
+      <div class="json-warning">
+        ⚠️ <strong>必ず最新版の workspace.json を使用してください。</strong><br>
+        古いファイルを使うとブロック不整合が発生する場合があります。
+      </div>
+      <input type="file" id="workspaceFile" accept="application/json" />
+      <div id="workspaceStatus" class="small"></div>
+
+      <h3>定義済み変数一覧</h3>
+      <table class="vars-table" id="varsTable">
+        <thead>
+          <tr><th>name</th><th>type</th></tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+    </section>
+
+    <section>
+      <h2>2. 文言データを貼り付け</h2>
+      <p class="small">
+        ・カンマ区切り / スプレッドシート範囲コピー(タブ区切り) どちらでもOKです。<br>
+        ・空セル / 空行は自動でスキップされます。
+      </p>
+      <textarea id="textSource" placeholder="例: 
+    Hello,World
+    Foo,Bar
+    シートからコピペしてもOK"></textarea><br>
+      <button id="parseText">リストに変換</button>
+
+      <h3>文言リスト（ドラッグで並び替え）</h3>
+      <div class="list-bulk-actions">
+        <button id="checkAllBtn">すべてチェック</button>
+        <button id="uncheckAllBtn">すべて解除</button>
+      </div>
+      <ul id="textList" class="list"></ul>
+    </section>
+
+    <section>
+      <h2>3. 出力ブロック設定</h2>
+      <div>
+        <div>
+          <label>
+            <input type="radio" name="pattern" value="1" checked>
+            パターン1: EmptyArray から AppendToArray 入れ子
+          </label>
+          <button class="help-btn" data-help="1">？</button>
+        </div>
+        <div>
+          <label>
+            <input type="radio" name="pattern" value="2">
+            パターン2: GetVariable から AppendToArray 入れ子
+          </label>
+          <button class="help-btn" data-help="2">？</button>
+          <div class="pattern2-select-wrapper">
+            <label class="small">
+              使用する変数:
+              <select id="varSelectPattern2">
+                <option value="">（workspace 読み込み後に選択）</option>
+              </select>
+            </label>
+          </div>
+        </div>
+        <div>
+          <label>
+            <input type="radio" name="pattern" value="3">
+            パターン3: 各文言を Message ブロック
+          </label>
+          <button class="help-btn" data-help="3">？</button>
+        </div>
+
+        <div class="setvar-option">
+          <label>
+            <input type="checkbox" id="useSetVariable">
+            パターン1 / 2 の結果を SetVariable で変数に格納する
+          </label>
+          <label class="small" id="setVarSelectWrapper" style="display:none;">
+            格納先変数:
+            <select id="setVarVarSelect">
+              <option value="">（workspace 読み込み後に選択）</option>
+            </select>
+          </label>
+        </div>
+      </div>
+      <button id="addBlocks">チェックした項目でブロック生成 → 出力キューに追加</button>
+    </section>
+
+    <section>
+      <h2>4. 出力ブロック一覧 & 挿入位置</h2>
+      <div class="insert-pos-group">
+        出力ブロックの配置位置:
+        <label><input type="radio" name="insertPos" value="bottom" checked> 既存ブロック群の下側に追加</label>
+        <label><input type="radio" name="insertPos" value="top"> 既存ブロック群の上側に追加</label>
+      </div>
+
+      <div id="blocksArea" class="block-list"></div>
+
+      <button id="exportJson">workspace_generated.json をダウンロード</button>
+    </section>
+
+    <!-- ヘルプモーダル -->
+    <div id="helpModalOverlay" class="modal-overlay">
+      <div class="modal">
+        <div class="modal-header">
+          <h3 id="helpModalTitle"></h3>
+          <button class="modal-close" id="helpModalClose">&times;</button>
+        </div>
+        <div class="modal-body">
+          <div id="helpModalSample"></div>
+          <p id="helpModalDesc"></p>
+        </div>
+      </div>
+    </div>
+
+    <!-- はじめにお読みください -->
+  <div id="modalReadFirst" class="modal-overlay">
+    <div class="modal">
+      <div class="modal-header">
+        <h3>はじめにお読みください</h3>
+        <button class="modal-close">&times;</button>
+      </div>
+      <div class="modal-body">
+        <p>【免責事項】</p>
+        <p>このツールは、Battlefield 6 Portalの非公式なユーザー作成アシストツールです。本ツールは、開発元（Electronic Arts, DICEなど）とは一切関係ありません。</p>
+        <p>本ツールの利用は自己責任でお願いします。ツールの利用によって発生したいかなる問題や損害についても、開発者は一切の責任を負いません。</p>
+        <p>本ツールが出力するJSONファイルは、BF Portalの仕様変更やアップデートにより、予告なく正常に動作しなくなる可能性があります。</p>
+        <p>出力されたJSONファイルがゲーム内（Portalエディターを含む）で予期せぬ挙動を引き起こさないことを保証するものではありません。</p>
+        <br>
+        <p>本ツールを利用する際は、Electronic ArtsおよびBF Portalの定める利用規約を遵守してください。</p>
+        <p>利用規約に反する目的での本ツールの利用は固く禁じます。</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- バージョン履歴 -->
+  <div id="modalVersion" class="modal-overlay">
+    <div class="modal">
+      <div class="modal-header">
+        <h3>バージョン履歴</h3>
+        <button class="modal-close">&times;</button>
+      </div>
+      <div class="modal-body">
+        <p>2025-11-20 v1.0.0 - 初回リリース</p>
+      </div>
+    </div>
+  </div>
+
+    <script src="script.js"></script>
+  </div>
+</body>
+</html>

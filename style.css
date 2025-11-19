@@ -1,0 +1,331 @@
+@charset "utf-8";
+:root {
+  --bg: #f4f5f7;
+  --card-bg: #ffffff;
+  --text: #333;
+  --accent: #4b8cff;
+  --accent-dark: #2e6de0;
+  --border: #d0d4da;
+  --header-bg: #1e2a38;
+  --header-text: #eef3ff;
+}
+
+body {
+  margin: 0;
+  padding: 0;
+  background: var(--bg);
+  font-family: "Segoe UI", system-ui, sans-serif;
+  color: var(--text);
+}
+.container {
+  width: 100%;
+  max-width: 1200px; /* ページ全体の最大幅（好みで 1000〜1300px）*/
+  margin: 0 auto;    /* 中央寄せ */
+  padding: 0 24px;   /* 画面左右に余白 */
+}
+/* Header */
+.app-header {
+  background: var(--header-bg);
+  color: var(--header-text);
+  padding: 16px 20px;
+  width: 100%;
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+}
+.app-header h1 {
+  margin: 0;
+  font-size: 20px;
+}
+.header-container {
+  width: 100%;
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 24px;
+  box-sizing: border-box;
+
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+}
+.header-actions {
+  display: flex;
+  gap: 10px;
+}
+.header-btn {
+  padding: 6px 12px;
+  background: var(--accent);
+  border: none;
+  color: #fff;
+  border-radius: 6px;
+  cursor: pointer;
+}
+.header-btn:hover {
+  background: var(--accent-dark);
+}
+
+/* JSON 警告 */
+.json-warning {
+  margin: 20px;
+  padding: 12px 14px;
+  background: #fff3c4;
+  border: 1px solid #e6c86e;
+  border-radius: 6px;
+}
+/* カード風コンテナ */
+section {
+  background: var(--card-bg);
+  margin: 32px 0;
+  padding: 24px 28px;
+  border-radius: 12px;
+  border: 1px solid var(--border);
+  box-shadow: 0 2px 6px rgba(0,0,0,0.07);
+}
+
+section h2 {
+  margin-top: 0;
+  padding-bottom: 6px;
+  border-bottom: 1px solid #e0e3e7;
+  margin-bottom: 14px;
+}
+
+/* モーダル共通デザイン */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.45);
+  display: none;
+  align-items: center;
+  justify-content: center;
+  z-index: 2000;
+}
+.modal {
+  background: #fff;
+  color: #333;
+  padding: 16px 20px;
+  border-radius: 10px;
+  width: min(90%, 480px);
+}
+.modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.modal-header h3 {
+    margin: 0;
+    font-size: 16px;
+}
+.modal-close {
+  background: none;
+  border: none;
+  font-size: 20px;
+  cursor: pointer;
+}
+.modal-body p {
+    margin: 4px 0 8px;
+    font-size: 13px;
+}
+
+/* レスポンシブ */
+@media (max-width: 540px) {
+
+  body {
+    font-size: 15px;
+    line-height: 1.7;  /* 読みやすく */
+  }
+
+  h1 {
+    font-size: 20px;
+  }
+
+  h2 {
+    font-size: 17px;
+  }
+
+  .header-btn {
+    font-size: 13px;
+    padding: 6px 10px;
+  }
+
+  label, .json-warning, p, li {
+    font-size: 14px;
+  }
+
+  .container {
+    padding: 0 12px;
+  }
+
+  section {
+    padding: 16px 14px;
+    margin: 16px 0;
+  }
+}
+
+textarea { width: 100%; min-height: 120px; }
+.vars-table, .vars-table th, .vars-table td {
+    border: 1px solid #ccc;
+    border-collapse: collapse;
+    padding: 4px 6px;
+    font-size: 12px;
+}
+.list { list-style: none; padding: 0; margin: 0; }
+.list-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 4px 6px;
+    border: 1px solid #ddd;
+    margin-bottom: 4px;
+    background: #fafafa;
+    cursor: grab;
+}
+.list-item.dragging { opacity: 0.5; }
+.index-badge {
+    min-width: 32px;
+    text-align: right;
+    font-weight: bold;
+    color: #555;
+}
+.text-preview {
+    flex: 1;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+.block-list { margin-top: 8px; }
+.block-chip {
+    border: 1px solid #ccc;
+    padding: 6px 8px;
+    margin: 4px 0;
+    font-size: 12px;
+    background: #f5f5f5;
+    cursor: pointer;
+}
+.block-chip-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 8px;
+}
+.block-chip-title {
+    font-weight: 600;
+}
+.block-chip button {
+    font-size: 11px;
+    margin: 0;
+}
+.block-chip-details {
+    margin-top: 4px;
+    padding-top: 4px;
+    border-top: 1px solid #ddd;
+    font-size: 11px;
+}
+.block-chip-details ul {
+    margin: 4px 0;
+    padding-left: 18px;
+}
+button { margin: 4px 0; }
+.small { font-size: 11px; color: #666; }
+
+/* Portal風ブロックサンプル */
+.block-sample {
+    background: #07140b;
+    padding: 8px;
+    border-radius: 8px;
+    margin-bottom: 8px;
+}
+.block-row {
+    display: inline-flex;
+    align-items: center;
+    padding: 4px 8px;
+    border-radius: 999px;
+    background: #23452c;
+    border: 1px solid #cbb06a;
+    color: #fefefe;
+    font-size: 11px;
+    margin: 4px 0;
+}
+.block-slot {
+    display: inline-flex;
+    align-items: center;
+    padding: 2px 6px;
+    border-radius: 999px;
+    background: #193322;
+    border: 1px solid #4c9154;
+    margin-left: 6px;
+}
+.block-slot-label {
+    margin-right: 4px;
+    opacity: 0.8;
+}
+.pill {
+    display: inline-flex;
+    align-items: center;
+    padding: 2px 6px;
+    border-radius: 999px;
+    background: #1a2c3f;
+    border: 1px solid #567ba5;
+    font-size: 10px;
+    margin-left: 4px;
+}
+.help-btn {
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    border: none;
+    background: var(--accent);
+    color: #fff;
+    font-size: 14px;
+    font-weight: bold;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+
+    margin-left: 6px;
+    transition-property: background-color, transform;
+    transition-duration: 0.2s, 0.1s;
+    transition-timing-function: ease;
+}
+.help-btn:hover {
+  background: var(--accent-dark);
+}
+.help-btn:active {
+  transform: scale(0.92);
+}
+.insert-pos-group {
+    margin: 4px 0 8px;
+    font-size: 12px;
+}
+.setvar-option {
+    margin-top: 8px;
+    font-size: 12px;
+}
+.pattern2-select-wrapper {
+    display: none;
+    margin-left: 24px;
+    margin-top: 6px;
+    margin-bottom: 10px;
+}
+
+.list-bulk-actions {
+  margin-bottom: 10px;
+  display: flex;
+  gap: 10px;
+}
+
+.list-bulk-actions button {
+  padding: 4px 10px;
+  font-size: 13px;
+  border: 1px solid var(--border);
+  background: #fff;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.list-bulk-actions button:hover {
+  background: #f3f3f3;
+}
