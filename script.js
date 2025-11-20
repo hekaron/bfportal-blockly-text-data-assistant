@@ -2,6 +2,11 @@ let workspace = null;
 let variables = [];
 let textItems = [];   // {id, text, checked}
 let pendingBlocks = []; // {id, root, description, pattern, texts}
+let currentMode = null;
+let existingTextBlocks = [];
+let pairingTargetExisting = null; // 選択中の既存ブロック
+let pairingTargetNewText = null; // 選択中の新しい文言
+let pairEntries = [];
 
 const workspaceFileInput = document.getElementById('workspaceFile');
 const workspaceStatus = document.getElementById('workspaceStatus');
@@ -28,9 +33,51 @@ const helpModalSample = document.getElementById('helpModalSample');
 const helpModalDesc = document.getElementById('helpModalDesc');
 const helpModalClose = document.getElementById('helpModalClose');
 
-// --- ユニークID生成（簡易版） ---
-function genId() {
-    return 'id_' + Math.random().toString(36).slice(2, 10);
+const modeSelectArea = document.getElementById("modeSelectArea");
+const newBlocksModeArea = document.getElementById("newBlocksModeArea");
+const updateBlocksModeArea = document.getElementById("updateBlocksModeArea");
+
+const textInputSharedArea = document.getElementById("textInputSharedArea");
+
+const newTextAreaWrapper  = document.getElementById("newTextAreaWrapper");
+const updateTextAreaWrapper = document.getElementById("updateTextAreaWrapper");
+
+const modeNewBlocksBtn = document.getElementById("modeNewBlocksBtn");
+const modeUpdateBlocksBtn = document.getElementById("modeUpdateBlocksBtn");
+
+const pair_existingList = document.getElementById("pair_existingList");
+const pair_textDataList = document.getElementById("pair_textDataList");
+const currentPairList = document.getElementById("currentPairList");
+
+const autoPairBtn = document.getElementById("autoPairBtn");
+const applyPairBtn = document.getElementById("applyPairBtn");
+const applyAllPairsBtn = document.getElementById("applyAllPairsBtn");
+
+updateTextAreaWrapper.appendChild(textInputSharedArea);
+
+// Workspace 内の既存ID、および新規生成IDはこちらに格納
+const usedIds = new Set();
+
+function genPortalLikeId() {
+  const chars =
+    "abcdefghijklmnopqrstuvwxyz" +
+    "ABCDEFGHIJKLMNOPQRSTUVWXYZ" +
+    "0123456789" +
+    "()/{}[]<>!?*._-+`~";
+
+  const length = 20;
+
+  let id;
+  do {
+    let arr = [];
+    for (let i = 0; i < length; i++) {
+      arr.push(chars[Math.floor(Math.random() * chars.length)]);
+    }
+    id = arr.join("");
+  } while (usedIds.has(id));
+
+  usedIds.add(id);
+  return id;
 }
 
 // --- workspace 読み込み ---
@@ -50,10 +97,44 @@ workspaceFileInput.addEventListener('change', async (e) => {
     variables = vars;
     renderVariables(vars);
     fillVariableSelects(vars);
+    showModeSelect();
+    updatePattern2Visibility();
 
     workspaceStatus.textContent = '読み込み完了: ブロック数 ' +
     (workspace?.mod?.blocks?.blocks?.length || 0) +
     ' / 変数 ' + vars.length + ' 件';
+
+    extractExistingTextBlocks(workspace);
+    renderPairSelectors();
+
+    usedIds.clear();
+    workspace.mod?.blocks?.blocks.forEach(b => usedIds.add(b.id));
+});
+
+function showModeSelect() {
+  modeSelectArea.classList.remove("hidden");
+}
+
+modeNewBlocksBtn.addEventListener("click", () => {
+  currentMode = "new";
+  newBlocksModeArea.classList.remove("hidden");
+  updateBlocksModeArea.classList.add("hidden");
+
+  newTextAreaWrapper.appendChild(textInputSharedArea);
+  newBlocksModeArea.classList.remove("hidden");
+  updateBlocksModeArea.classList.add("hidden");
+});
+
+modeUpdateBlocksBtn.addEventListener("click", () => {
+  currentMode = "update";
+  updateBlocksModeArea.classList.remove("hidden");
+  newBlocksModeArea.classList.add("hidden");
+
+  updateTextAreaWrapper.appendChild(textInputSharedArea);
+  updateBlocksModeArea.classList.remove("hidden");
+  newBlocksModeArea.classList.add("hidden");
+  renderPairSelectors();
+  renderPairingList();
 });
 
 function renderVariables(vars) {
@@ -82,6 +163,325 @@ function fillVariableSelects(vars) {
     });
 }
 
+function extractExistingTextBlocks(workspaceJson) {
+  existingTextBlocks = [];
+
+  // mod.blocks.blocks 優先。なければ blocks.blocks を見る
+  const blocksArr =
+    (workspaceJson && workspaceJson.mod && workspaceJson.mod.blocks && workspaceJson.mod.blocks.blocks) ||
+    (workspaceJson && workspaceJson.blocks && workspaceJson.blocks.blocks) ||
+    [];
+
+  if (!Array.isArray(blocksArr)) return;
+
+  function visit(block, parentInfo) {
+    if (!block) return;
+
+    const type = block.type;
+
+    // Text ブロックだったら登録
+    if (type === "Text" || type === "text") {
+      const value = (block.fields && block.fields.TEXT) || "";
+      existingTextBlocks.push({
+        id: block.id,
+        value,
+        messageBlockId: parentInfo && parentInfo.messageBlockId || null,
+        parentType: parentInfo && parentInfo.parentType || null,
+        parentId: parentInfo && parentInfo.parentId || null,
+        argIndex:
+          parentInfo && typeof parentInfo.argIndex === "number"
+            ? parentInfo.argIndex
+            : null,
+        ref: block
+      });
+    }
+
+    // Message コンテキストを継承
+    let messageContext =
+      parentInfo && parentInfo.messageBlockId
+        ? { messageBlockId: parentInfo.messageBlockId }
+        : {};
+    if (type === "Message" || type === "message") {
+      messageContext = { messageBlockId: block.id };
+    }
+
+    // inputs をたどる（Message 以外でも Text が入っていれば拾える）
+    if (block.inputs) {
+      Object.keys(block.inputs).forEach((key) => {
+        const input = block.inputs[key];
+        const child = input && input.block;
+        if (!child) return;
+
+        const childInfo = {
+          parentType: type,
+          parentId: block.id,
+          messageBlockId: messageContext.messageBlockId || null
+        };
+
+        // Message の VALUE-n 入力なら argIndex を付ける
+        if ((type === "Message" || type === "message") && key.startsWith("VALUE-")) {
+          const num = parseInt(key.split("-")[1], 10);
+          if (!isNaN(num)) {
+            childInfo.argIndex = num;
+          }
+        }
+
+        visit(child, childInfo);
+      });
+    }
+  }
+
+  blocksArr.forEach(root => visit(root, null));
+}
+
+function selectExistingText(entry) {
+  pairingTargetExisting = entry;
+  pairingTargetNewText = null;
+
+  const editInput = document.getElementById("directEditInput");
+  const editArea = document.getElementById("directEditArea");
+
+  // 値表示
+  editInput.value = entry.value;
+  editArea.classList.remove("hidden");
+
+  // 位置を常に最上部へ固定
+  const currentArea = document.getElementById("currentPairArea");
+  currentArea.insertBefore(editArea, currentArea.children[1]);
+
+  // 再描画
+  renderPairSelectors();
+  renderPairingList();
+}
+
+document.getElementById("directEditApply").addEventListener("click", () => {
+  if (!pairingTargetExisting) return;
+
+  const newValue = document.getElementById("directEditInput").value.trim();
+  if (newValue === "") return;
+
+  // ブロック本体更新
+  pairingTargetExisting.ref.fields.TEXT = newValue;
+
+  // existingTextBlocks の値更新
+  pairingTargetExisting.value = newValue;
+
+  // UI 更新
+  renderPairSelectors();
+});
+
+// 文言データ側の選択
+function selectNewText(textItem) {
+  if (!pairingTargetExisting) return;
+
+  // textItems のプロパティは text
+  pairingTargetNewText = textItem.text;
+
+  // 既存ブロック文言エリアを閉じる
+  const editArea = document.getElementById("directEditArea");
+  if (editArea) {
+    editArea.classList.add("hidden");
+  }
+
+  pairEntries.push({
+    existing: pairingTargetExisting,
+    newValue: pairingTargetNewText
+  });
+
+  // クリア
+  pairingTargetExisting = null;
+  pairingTargetNewText = null;
+
+  renderPairingList();
+  renderPairSelectors();
+}
+
+function isExistingPaired(entry) {
+  return pairEntries.some(p => p.existing.id === entry.id);
+    // return false;
+}
+
+// 既存ブロック＆文言データのリスト描画
+function renderPairSelectors() {
+  // 左リスト：既存ブロックすべて
+  pair_existingList.innerHTML = "";
+  existingTextBlocks.forEach(entry => {
+    const li = document.createElement("li");
+    li.classList.add("pair-existing-item");
+    li.setAttribute("title", `id: ${entry.id}`);
+
+    const isPaired = isExistingPaired(entry);
+    if (isPaired) {
+      // ペアに入っている間は再選択不可
+      li.classList.add("disabled");
+    } else {
+      li.addEventListener("click", () => {
+        selectExistingText(entry);
+      });
+    }
+
+    if (pairingTargetExisting && pairingTargetExisting.id === entry.id) {
+      li.classList.add("selected");
+    }
+
+    // 見た目再現：Message か Text かで分岐
+    const wrapper = document.createElement("div");
+    wrapper.classList.add("block-row");
+
+    if (entry.messageBlockId != null && typeof entry.argIndex === "number") {
+      // Message ブロック用表示
+      const labelSpan = document.createElement("span");
+      labelSpan.textContent = "Message";
+      labelSpan.style.marginRight = "6px";
+
+      const slot = document.createElement("span");
+      slot.classList.add("block-slot");
+
+      const slotLabel = document.createElement("span");
+      slotLabel.classList.add("block-slot-label");
+      slotLabel.textContent = `Arg ${entry.argIndex + 1}`;
+
+      const textSpan = document.createElement("span");
+      textSpan.textContent = `"${entry.value}"`;
+
+      slot.appendChild(slotLabel);
+      slot.appendChild(textSpan);
+
+      wrapper.appendChild(labelSpan);
+      wrapper.appendChild(slot);
+    } else {
+      // Text ブロック風表示
+      const slot = document.createElement("span");
+      slot.classList.add("block-slot");
+
+      const slotLabel = document.createElement("span");
+      slotLabel.classList.add("block-slot-label");
+      slotLabel.textContent = "Text";
+
+      const textSpan = document.createElement("span");
+      textSpan.textContent = `"${entry.value}"`;
+
+      slot.appendChild(slotLabel);
+      slot.appendChild(textSpan);
+      wrapper.appendChild(slot);
+    }
+
+    li.appendChild(wrapper);
+    pair_existingList.appendChild(li);
+  });
+
+  // 右リスト：文言データ
+  pair_textDataList.innerHTML = "";
+  textItems.forEach(item => {
+    const li = document.createElement("li");
+    li.classList.add("pair-text-item");
+    li.textContent = item.text;
+
+    if (!pairingTargetExisting) {
+      // 既存ブロック未選択時は押せない
+      li.classList.add("disabled");
+    } else {
+      li.addEventListener("click", () => selectNewText(item));
+    }
+
+    // 自動マッチ候補ハイライト
+    if (pairingTargetExisting && item.text === pairingTargetExisting.value) {
+      li.classList.add("auto-match");
+    }
+
+    pair_textDataList.appendChild(li);
+  });
+}
+
+// ペア一覧表示
+function renderPairingList() {
+  currentPairList.innerHTML = "";
+
+  pairEntries.forEach((pair, index) => {
+    const li = document.createElement("li");
+
+    li.innerHTML = `
+      <span class="current-pair-labels">${pair.existing.value} ← ${pair.newValue}</span>
+      <div class="current-pair-actions">
+        <button data-index="${index}" class="apply-one-btn">反映</button>
+        <button data-index="${index}" class="delete-pair-btn">キャンセル</button>
+      </div>
+    `;
+
+    currentPairList.appendChild(li);
+  });
+
+  // 個別反映
+  currentPairList.querySelectorAll(".apply-one-btn").forEach(btn => {
+    btn.addEventListener("click", () => {
+      const idx = parseInt(btn.dataset.index);
+      applyPair(idx);
+    });
+  });
+
+  // 削除
+  currentPairList.querySelectorAll(".delete-pair-btn").forEach(btn => {
+    btn.addEventListener("click", () => {
+      const idx = parseInt(btn.dataset.index);
+      pairEntries.splice(idx, 1);
+      renderPairingList();
+      renderPairSelectors(); 
+    });
+  });
+}
+
+autoPairBtn.addEventListener("click", () => {
+  if (!pairingTargetExisting) return;
+
+  const match = textItems.find(t => t.text === pairingTargetExisting.value);
+  if (match) selectNewText(match);
+});
+
+// 1件反映
+function applyPair(index) {
+  const pair = pairEntries[index];
+  if (!pair) return;
+
+  pair.existing.ref.fields.TEXT = pair.newValue;
+  pair.existing.value = pair.newValue;
+
+  // 完了後消す
+  pairEntries.splice(index, 1);
+  renderPairingList();
+  renderPairSelectors();
+}
+
+// 全件反映
+applyAllPairsBtn.addEventListener("click", () => {
+  pairEntries.forEach(pair => {
+    pair.existing.ref.fields.TEXT = pair.newValue;
+    pair.existing.value = pair.newValue;
+  });
+
+  pairEntries = [];
+  renderPairingList();
+  renderPairSelectors();
+});
+
+function exportUpdatedWorkspace() {
+  if (!workspace) {
+    alert('workspace.json が読み込まれていません');
+    return;
+  }
+  const data = JSON.stringify(workspace, null, 2);
+  const blob = new Blob([data], { type: "application/json" });
+  const url = URL.createObjectURL(blob);
+
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = "workspace_updated.json";
+  a.click();
+}
+
+document.getElementById("exportUpdateBtn").addEventListener("click", () => {
+  exportUpdatedWorkspace();
+});
+
 function updatePattern2Visibility() {
   const selected = document.querySelector('input[name="pattern"]:checked')?.value;
   if (selected === '2') {
@@ -95,8 +495,6 @@ function updatePattern2Visibility() {
 patternRadios.forEach(r => {
   r.addEventListener('change', updatePattern2Visibility);
 });
-
-updatePattern2Visibility();
 
 // --- テキスト入力 → リスト化 ---
 parseTextBtn.addEventListener('click', () => {
@@ -123,12 +521,22 @@ parseTextBtn.addEventListener('click', () => {
 
   // 3. UI用配列へ変換
   textItems = items.map((t) => ({
-    id: genId(),
+    id: genPortalLikeId(),
     text: t,
     checked: true
   }));
 
   renderTextList();
+
+  // 文言件数表示
+  document.getElementById("textListCount").textContent = `(${textItems.length}件)`;
+
+  // アコーディオンは閉じたまま
+  document.getElementById("textList").classList.add("hidden");
+});
+
+document.getElementById("textListHeader").addEventListener("click", () => {
+  document.getElementById("textList").classList.toggle("hidden");
 });
 
 if (checkAllBtn && uncheckAllBtn) {
@@ -157,6 +565,10 @@ function renderTextList() {
     cb.addEventListener('change', () => {
         item.checked = cb.checked;
     });
+
+    if (currentMode === "update") {
+        cb.style.display = "none";
+    }
 
     const idxSpan = document.createElement('span');
     idxSpan.className = 'index-badge';
@@ -239,7 +651,7 @@ useSetVariableCheckbox.addEventListener('change', updateSetVarVisibility);
 function createTextBlock(text) {
     return {
     type: 'Text',
-    id: genId(),
+    id: genPortalLikeId(),
     fields: { TEXT: text }
     };
 }
@@ -247,14 +659,14 @@ function createTextBlock(text) {
 function createEmptyArrayBlock() {
     return {
     type: 'EmptyArray',
-    id: genId()
+    id: genPortalLikeId()
     };
 }
 
 function createAppendBlock(leftBlock, rightBlock) {
     return {
     type: 'AppendToArray',
-    id: genId(),
+    id: genPortalLikeId(),
     inputs: {
         'VALUE-0': { block: leftBlock },
         'VALUE-1': { block: rightBlock }
@@ -265,7 +677,7 @@ function createAppendBlock(leftBlock, rightBlock) {
 function createVariableReferenceBlock(variable) {
     return {
     type: 'variableReferenceBlock',
-    id: genId(),
+    id: genPortalLikeId(),
     extraState: { isObjectVar: false },
     fields: {
         OBJECTTYPE: variable.type || 'Global',
@@ -277,7 +689,7 @@ function createVariableReferenceBlock(variable) {
 function createGetVariableBlock(variable) {
     return {
     type: 'GetVariable',
-    id: genId(),
+    id: genPortalLikeId(),
     inputs: {
         'VALUE-0': {
         block: createVariableReferenceBlock(variable)
@@ -289,7 +701,7 @@ function createGetVariableBlock(variable) {
 function createSetVariableBlock(variable, valueBlock) {
     return {
     type: 'SetVariable',
-    id: genId(),
+    id: genPortalLikeId(),
     inputs: {
         'VALUE-0': { block: createVariableReferenceBlock(variable) },
         'VALUE-1': { block: valueBlock }
@@ -300,7 +712,7 @@ function createSetVariableBlock(variable, valueBlock) {
 function createMessageBlock(text) {
     return {
     type: 'Message',
-    id: genId(),
+    id: genPortalLikeId(),
     inputs: {
         'VALUE-0': { block: createTextBlock(text) }
     }
@@ -647,6 +1059,10 @@ function showHelpModal(pattern) {
     helpModalDesc.textContent = desc;
     helpModalOverlay.style.display = 'flex';
 }
+
+document.getElementById("btnOpenHowToUse").addEventListener("click", () => {
+  window.open("how_to_use.html", "_blank");
+});
 
 // 初期状態の SetVariable オプション表示
 updateSetVarVisibility();

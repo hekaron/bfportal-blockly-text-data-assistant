@@ -4,6 +4,11 @@
   <meta charset="UTF-8" />
   <title>Battlefield Portal Workspace 文言→ブロック生成ツール</title>
   <link rel="stylesheet" href="style.css" type="text/css">
+  <style>
+    .hidden {
+      display: none;
+    }
+  </style>
 </head>
 <body>
   <div class="container">
@@ -11,6 +16,7 @@
       <div class="header-container">
         <h1>BF Portal Workspace 文言ブロック生成ツール</h1>
         <div class="header-actions">
+          <button class="header-btn" id="btnOpenHowToUse">使い方</button>
           <button class="header-btn" id="btnReadFirst">はじめにお読みください</button>
           <button class="header-btn" id="btnVersion">バージョン履歴</button>
         </div>
@@ -34,87 +40,133 @@
       </table>
     </section>
 
-    <section>
-      <h2>2. 文言データを貼り付け</h2>
-      <p class="small">
-        ・カンマ区切り / スプレッドシート範囲コピー(タブ区切り) どちらでもOKです。<br>
-        ・空セル / 空行は自動でスキップされます。
-      </p>
-      <textarea id="textSource" placeholder="例: 
-    Hello,World
-    Foo,Bar
-    シートからコピペしてもOK"></textarea><br>
-      <button id="parseText">リストに変換</button>
-
-      <h3>文言リスト（ドラッグで並び替え）</h3>
-      <div class="list-bulk-actions">
-        <button id="checkAllBtn">すべてチェック</button>
-        <button id="uncheckAllBtn">すべて解除</button>
+    <div id="modeSelectArea" class="hidden">
+      <h2>モード選択</h2>
+      <div class="mode-select-buttons">
+        <button id="modeNewBlocksBtn" class="mode-btn">新規ブロック追加モード</button>
+        <button id="modeUpdateBlocksBtn" class="mode-btn">既存ブロック更新モード</button>
       </div>
-      <ul id="textList" class="list"></ul>
-    </section>
+    </div>
 
-    <section>
-      <h2>3. 出力ブロック設定</h2>
-      <div>
-        <div>
-          <label>
-            <input type="radio" name="pattern" value="1" checked>
-            パターン1: EmptyArray から AppendToArray 入れ子
-          </label>
-          <button class="help-btn" data-help="1">？</button>
+    <div id="updateBlocksModeArea" class="hidden">
+
+      <!-- 2. 文言データの貼り付け（既存 UI を再利用） -->
+      <section id="updateTextAreaWrapper">
+        <h2>2. 文言データを貼り付け</h2>
+      </section>
+
+      <!-- 4. ペアリング UI -->
+      <section id="pairingSection">
+        <h2>文言ペアリング</h2>
+
+        <!-- 選択中ペア表示 -->
+        <div id="currentPairArea" class="current-pair-area">
+          <div id="directEditArea" class="hidden edit-box">
+            <div class="edit-box-row">
+              <label>選択中の既存ブロック文言：</label>
+              <input type="text" id="directEditInput">
+              <button id="directEditApply">変更</button>
+            </div>
+          </div>
+          <h3>選択中のペア</h3>
+          <ul id="currentPairList"></ul>
+
+          <button id="autoPairBtn" class="hidden">自動選択（完全一致）</button>
+          <button id="applyPairBtn" class="hidden">このペアを反映</button>
+          <button id="applyAllPairsBtn" class="hidden">すべて反映</button>
         </div>
+
+        <div class="pairing-container">
+          <!-- 左：既存ブロックリストで選択したもの -->
+          <div class="pairing-column">
+            <h3>既存ブロックの文言</h3>
+            <ul id="pair_existingList" class="pair-list"></ul>
+          </div>
+
+          <!-- 右：文言データのリスト -->
+          <div class="pairing-column">
+            <h3>文言データ</h3>
+            <ul id="pair_textDataList" class="pair-list"></ul>
+          </div>
+        </div>
+
+      </section>
+
+      <section>
+        <h2>4. 更新したワークスペースファイル出力</h2>
+        <button id="exportUpdateBtn">更新版 workspace をエクスポート</button>
+      </section>
+
+    </div>
+
+
+    <div id="newBlocksModeArea" class="hidden">
+      <section id="newTextAreaWrapper">
+        <h2>2. 文言データを貼り付け</h2>
+      </section>
+
+      <section>
+        <h2>3. 出力ブロック設定</h2>
         <div>
-          <label>
-            <input type="radio" name="pattern" value="2">
-            パターン2: GetVariable から AppendToArray 入れ子
-          </label>
-          <button class="help-btn" data-help="2">？</button>
-          <div class="pattern2-select-wrapper">
-            <label class="small">
-              使用する変数:
-              <select id="varSelectPattern2">
+          <div>
+            <label>
+              <input type="radio" name="pattern" value="1" checked>
+              パターン1: EmptyArray から AppendToArray 入れ子
+            </label>
+            <button class="help-btn" data-help="1">？</button>
+          </div>
+          <div>
+            <label>
+              <input type="radio" name="pattern" value="2">
+              パターン2: GetVariable から AppendToArray 入れ子
+            </label>
+            <button class="help-btn" data-help="2">？</button>
+            <div class="pattern2-select-wrapper">
+              <label class="small">
+                使用する変数:
+                <select id="varSelectPattern2">
+                  <option value="">（workspace 読み込み後に選択）</option>
+                </select>
+              </label>
+            </div>
+          </div>
+          <div>
+            <label>
+              <input type="radio" name="pattern" value="3">
+              パターン3: 各文言を Message ブロック
+            </label>
+            <button class="help-btn" data-help="3">？</button>
+          </div>
+
+          <div class="setvar-option">
+            <label>
+              <input type="checkbox" id="useSetVariable">
+              パターン1 / 2 の結果を SetVariable で変数に格納する
+            </label>
+            <label class="small" id="setVarSelectWrapper" style="display:none;">
+              格納先変数:
+              <select id="setVarVarSelect">
                 <option value="">（workspace 読み込み後に選択）</option>
               </select>
             </label>
           </div>
         </div>
-        <div>
-          <label>
-            <input type="radio" name="pattern" value="3">
-            パターン3: 各文言を Message ブロック
-          </label>
-          <button class="help-btn" data-help="3">？</button>
+        <button id="addBlocks">チェックした項目でブロック生成 → 出力キューに追加</button>
+      </section>
+
+      <section>
+        <h2>4. 出力ブロック一覧 & 挿入位置</h2>
+        <div class="insert-pos-group">
+          出力ブロックの配置位置:
+          <label><input type="radio" name="insertPos" value="bottom" checked> 既存ブロック群の下側に追加</label>
+          <label><input type="radio" name="insertPos" value="top"> 既存ブロック群の上側に追加</label>
         </div>
 
-        <div class="setvar-option">
-          <label>
-            <input type="checkbox" id="useSetVariable">
-            パターン1 / 2 の結果を SetVariable で変数に格納する
-          </label>
-          <label class="small" id="setVarSelectWrapper" style="display:none;">
-            格納先変数:
-            <select id="setVarVarSelect">
-              <option value="">（workspace 読み込み後に選択）</option>
-            </select>
-          </label>
-        </div>
-      </div>
-      <button id="addBlocks">チェックした項目でブロック生成 → 出力キューに追加</button>
-    </section>
+        <div id="blocksArea" class="block-list"></div>
 
-    <section>
-      <h2>4. 出力ブロック一覧 & 挿入位置</h2>
-      <div class="insert-pos-group">
-        出力ブロックの配置位置:
-        <label><input type="radio" name="insertPos" value="bottom" checked> 既存ブロック群の下側に追加</label>
-        <label><input type="radio" name="insertPos" value="top"> 既存ブロック群の上側に追加</label>
-      </div>
-
-      <div id="blocksArea" class="block-list"></div>
-
-      <button id="exportJson">workspace_generated.json をダウンロード</button>
-    </section>
+        <button id="exportJson">ブロック追加生成版 workspace をエクスポート</button>
+      </section>
+    </div>
 
     <!-- ヘルプモーダル -->
     <div id="helpModalOverlay" class="modal-overlay">
@@ -146,6 +198,7 @@
         <br>
         <p>本ツールを利用する際は、Electronic ArtsおよびBF Portalの定める利用規約を遵守してください。</p>
         <p>利用規約に反する目的での本ツールの利用は固く禁じます。</p>
+        <p>製作者：hekaron</p>
       </div>
     </div>
   </div>
@@ -158,9 +211,31 @@
         <button class="modal-close">&times;</button>
       </div>
       <div class="modal-body">
-        <p>2025-11-20 v1.0.0 - 初回リリース</p>
+        <p>2025-11-21: v1.1.0 - 既存ブロック更新モード追加, 使い方ページ追加</p>
+        <p>2025-11-20: v1.0.0 - 初回リリース</p>
       </div>
     </div>
+  </div>
+
+  <div id="textInputSharedArea">
+    <p class="small">
+      ・カンマ区切り / スプレッドシート範囲コピー(タブ区切り) どちらでもOKです。<br>
+      ・空セル / 空行は自動でスキップされます。
+    </p>
+    <textarea id="textSource" placeholder="例: 
+  Hello,World
+  Foo,Bar
+  シートからコピペしてもOK"></textarea><br>
+    <button id="parseText">リストに変換</button>
+
+    <div class="text-list-header" id="textListHeader">
+      <h3>文言リスト　<span id="textListCount"></span>　<span class="accordion-indicator" id="textListChevron">▼</span></h3>
+      <div class="list-bulk-actions hidden">
+        <button id="checkAllBtn">すべてチェック</button>
+        <button id="uncheckAllBtn">すべて解除</button>
+      </div>
+    </div>
+    <ul id="textList" class="list hidden"></ul>
   </div>
 
     <script src="script.js"></script>
