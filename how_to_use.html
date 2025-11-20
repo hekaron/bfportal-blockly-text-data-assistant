@@ -1,0 +1,755 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <title>BF Portal Workspace 文言ブロック生成ツール 使い方ガイド</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <style>
+    :root {
+      --bg-body: #f5f6f7;
+      --bg-panel: #ffffff;
+      --border-panel: #dde1e6;
+      --text-main: #222222;
+      --text-muted: #666666;
+      --accent: #1f6feb;
+      --accent-soft: #e7f1ff;
+      --warning-bg: #fff4ce;
+      --warning-border: #ffcc00;
+      --code-bg: #f0f2f4;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background-color: var(--bg-body);
+      color: var(--text-main);
+      line-height: 1.6;
+    }
+
+    a {
+      color: var(--accent);
+      text-decoration: none;
+    }
+
+    a:hover {
+      text-decoration: underline;
+    }
+
+    /* Header */
+    .site-header {
+      background-color: #0b253e;
+      color: #ffffff;
+      padding: 16px 32px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .site-header-title {
+      font-size: 18px;
+      font-weight: 600;
+    }
+
+    .site-header-actions {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    .header-button {
+      padding: 8px 14px;
+      border-radius: 16px;
+      border: none;
+      font-size: 13px;
+      cursor: pointer;
+      background-color: #1971ff;
+      color: #ffffff;
+      white-space: nowrap;
+    }
+
+    .header-button.secondary {
+      background-color: #264a79;
+    }
+
+    .header-button:hover {
+      opacity: 0.9;
+    }
+
+    /* Layout */
+    .page {
+      max-width: 1080px;
+      margin: 24px auto 48px;
+      padding: 0 16px 32px;
+    }
+
+    .section {
+      background-color: var(--bg-panel);
+      border: 1px solid var(--border-panel);
+      border-radius: 6px;
+      padding: 24px 24px 28px;
+      margin-bottom: 24px;
+    }
+
+    .section + .section {
+      margin-top: 12px;
+    }
+
+    .section-title {
+      font-size: 20px;
+      font-weight: 600;
+      margin: 0 0 16px;
+    }
+
+    .section-subtitle {
+      font-size: 16px;
+      font-weight: 600;
+      margin: 24px 0 8px;
+    }
+
+    .lead {
+      font-size: 15px;
+      color: var(--text-muted);
+      margin-bottom: 8px;
+    }
+
+    .badge {
+      display: inline-block;
+      font-size: 11px;
+      background-color: var(--accent-soft);
+      color: #224271;
+      padding: 3px 8px;
+      border-radius: 999px;
+      margin-right: 6px;
+    }
+
+    .toc {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 12px;
+      margin-top: 8px;
+    }
+
+    .toc-item {
+      font-size: 14px;
+      padding: 8px 10px;
+      background-color: #fafbfc;
+      border-radius: 4px;
+      border: 1px solid #e2e4e8;
+    }
+
+    .toc-item a {
+      display: block;
+      width: 100%;
+      height: 100%;
+    }
+
+    .notice {
+      padding: 12px 14px;
+      border-radius: 4px;
+      border: 1px solid var(--warning-border);
+      background-color: var(--warning-bg);
+      display: flex;
+      gap: 8px;
+      font-size: 13px;
+      margin: 12px 0 4px;
+    }
+
+    .notice-icon {
+      font-weight: 700;
+      margin-top: 2px;
+    }
+
+    .note {
+      padding: 10px 12px;
+      border-left: 3px solid var(--accent);
+      background-color: var(--accent-soft);
+      font-size: 13px;
+      margin: 10px 0;
+    }
+
+    ul, ol {
+      padding-left: 22px;
+      margin-top: 4px;
+      margin-bottom: 10px;
+    }
+
+    li {
+      margin-bottom: 4px;
+    }
+
+    code {
+      font-family: SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+      font-size: 12px;
+      background-color: var(--code-bg);
+      padding: 2px 4px;
+      border-radius: 3px;
+    }
+
+    pre {
+      background-color: var(--code-bg);
+      padding: 10px 12px;
+      font-size: 13px;
+      overflow-x: auto;
+      border-radius: 4px;
+    }
+
+    pre code {
+      padding: 0;
+      background: none;
+      font-size: 13px;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 8px 0 12px;
+      font-size: 13px;
+    }
+
+    th, td {
+      border: 1px solid #e1e4e8;
+      padding: 6px 8px;
+      text-align: left;
+    }
+
+    th {
+      background-color: #f6f8fa;
+      font-weight: 600;
+    }
+
+    .img-frame {
+      border-radius: 4px;
+      border: 1px solid #d0d7de;
+      background-color: #ffffff;
+      padding: 8px;
+      margin: 8px 0 2px;
+    }
+
+    .img-caption {
+      font-size: 12px;
+      color: var(--text-muted);
+      margin: 0 0 4px;
+    }
+
+    .img-frame img {
+      display: block;
+      max-width: 100%;
+      height: auto;
+    }
+
+    .faq-item {
+      margin-bottom: 18px;
+    }
+
+    .faq-q {
+      font-weight: 600;
+      margin-bottom: 4px;
+    }
+
+    .faq-a {
+      margin-left: 12px;
+      font-size: 14px;
+    }
+
+    @media (max-width: 600px) {
+      .site-header {
+        padding: 12px 16px;
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 8px;
+      }
+
+      .page {
+        padding: 0 10px 24px;
+      }
+
+      .section {
+        padding: 18px 14px 22px;
+      }
+    }
+  </style>
+</head>
+<body>
+
+<header class="site-header">
+  <div class="site-header-title">
+    BF Portal Workspace 文言ブロック生成ツール
+  </div>
+  <div class="site-header-actions">
+  </div>
+</header>
+
+<main class="page">
+
+  <!-- 概要セクション -->
+  <section id="overview" class="section">
+    <h1 class="section-title">使い方ガイド</h1>
+    <p class="lead">
+      このページは、<strong>Battlefield Portal の Blockly 形式 workspace.json を対象に、Message / Text ブロック内の文字列を大量に扱う補助ツール</strong>の使い方を説明するドキュメントです。
+    </p>
+    <p class="lead">
+      Portal の ビジュアルエディター だけでは手間がかかる「文言の一括生成・一括更新」を、スプレッドシートやテキストデータと組み合わせて効率良く行えるようにします。
+    </p>
+
+    <div class="notice">
+      <div class="notice-icon">⚠</div>
+      <div>
+        <strong>必ず最新版の workspace.json を使用してください。</strong><br>
+        古い JSON を使うと、Portal 側のブロック構造と合わず、意図しない位置にブロックが追加されたり、更新が反映されない場合があります。
+      </div>
+    </div>
+
+    <h2 class="section-subtitle">このツールでできること</h2>
+    <ul>
+      <li>Portal の ビジュアルエディター(Rules EditorのBlocksページ) からエクスポートした <code>workspace.json</code> を読み込む</li>
+      <li>既存の Message / Text ブロックから文字列を抽出して一覧表示</li>
+      <li>スプレッドシートやテキストファイルから大量の文言データをインポート</li>
+      <li>AppendToArray / SetVariable / Message ブロックなどを自動生成して workspace.json に追加</li>
+      <li>既に workspace にある Message / Text ブロックの文言を一括更新</li>
+    </ul>
+
+    <h2 class="section-subtitle">対応環境</h2>
+    <ul>
+      <li>PC ブラウザ：最新の Chrome / Edge / Safari を推奨</li>
+      <li>データ処理はすべてブラウザ内で完結（外部サーバーへの送信なし）</li>
+      <li>Battlefield Portal Rules Editor のビジュアルエディターのエクスポートファイル <code>workspace.json</code></li>
+    </ul>
+
+    <h2 class="section-subtitle">目次</h2>
+    <div class="toc">
+      <div class="toc-item"><a href="#flow">1. 基本フロー</a></div>
+      <div class="toc-item"><a href="#export_from_portal">2-1. workspace.json をビジュアルエディターからエクスポートする</a></div>
+      <div class="toc-item"><a href="#workspace">2-2. workspace.json の読み込み</a></div>
+      <div class="toc-item"><a href="#input">3. 文言データの貼り付け</a></div>
+      <div class="toc-item"><a href="#newblocks">4. 新規ブロック追加モード</a></div>
+      <div class="toc-item"><a href="#updateblocks">5. 既存ブロック更新モード</a></div>
+      <div class="toc-item"><a href="#export">6. Portal への反映</a></div>
+      <div class="toc-item"><a href="#faq">7. FAQ</a></div>
+      <div class="toc-item"><a href="#troubleshoot">8. トラブルシューティング</a></div>
+      <div class="toc-item"><a href="#glossary">9. 用語集</a></div>
+      <div class="toc-item"><a href="#creator">10. 作成者について</a></div>
+    </div>
+  </section>
+
+  <!-- 基本フロー -->
+  <section id="flow" class="section">
+    <h2 class="section-title">1. 基本フロー</h2>
+    <p>このツールの基本的な操作の流れは次のとおりです。</p>
+    <ol>
+      <li><strong>Portal から workspace.json をエクスポート</strong>する</li>
+      <li>本ツールで <strong>workspace.json を読み込む</strong></li>
+      <li><strong>作業モード（新規ブロック追加 / 既存ブロック更新）</strong>を選択する</li>
+      <li><strong>文言データ</strong>をスプレッドシート等から貼り付ける</li>
+      <li>目的に応じてブロックの <strong>自動生成または一括更新</strong>を行う</li>
+      <li>更新された <strong>workspace.json をダウンロード</strong>し、Portal にインポートする</li>
+    </ol>
+
+    <div class="note">
+      文言の追加と更新はいつでも切り替え可能ですが、作業前には必ず最新の workspace.json を再度読み込むことをおすすめします。
+    </div>
+  </section>
+
+  <section id="export_from_portal" class="section">
+    <h2 class="section-title">2-1. workspace.json をビジュアルエディターからエクスポートする</h2>
+    <div class="img-frame">
+      <img width="600" src="images/howto_image16.webp" alt="workspace.json 読み込み画面">
+    </div>
+    <p>ビジュアルエディターの画面右上に表示されているアイコンメニューの<strong>ワークスペースをエクスポート</strong>を選択し、jsonファイルをダウンロードします。</p>
+    <div class="notice">
+      <div class="notice-icon">⚠</div>
+      <div>
+        <strong>必ずバックアップファイルを用意してください。</strong><br>
+        このツールは細心の注意を払って作成していますが、誤動作を起こした場合にワークスペースに意図しない変更を加えてしまった場合を考慮して、バックアップとしてエクスポートしたjsonファイルをこのツールでの編集前の状態のモノとして別で保存しておくことを強くお奨めします。
+      </div>
+    </div>
+  </section>
+
+  <!-- workspace.json を読み込む -->
+  <section id="workspace" class="section">
+    <h2 class="section-title">2-2. workspace.json を読み込む</h2>
+
+    <div class="img-frame">
+      <p class="img-caption">図1：workspace.json 読み込み画面</p>
+      <img width="400" src="images/howto_image1.webp" alt="workspace.json 読み込み画面">
+    </div>
+
+    <p>ツールを開くと、ページ上部に <strong>「1. workspace.json を読み込む」</strong> セクションが表示されます。</p>
+
+    <ol>
+      <li><code>ファイルを選択</code> ボタンをクリック</li>
+      <li>Portal からエクスポートした <code>workspace.json</code> を選ぶ</li>
+      <li>読み込み完了後、ブロック数や変数一覧が表示される</li>
+    </ol>
+
+    <p>読み込みが成功すると、次のような情報が表示されます。</p>
+    <ul>
+      <li>読み込んだブロック数・変数数</li>
+      <li>ビジュアルエディターで定義(json内のvariablesに記述)されているカスタム変数一覧</li>
+    </ul>
+
+    <div class="img-frame">
+      <p class="img-caption">図2：定義済み変数一覧</p>
+      <img width="350" src="images/howto_image2.webp" alt="定義済み変数一覧">
+    </div>
+
+    <h3 class="section-subtitle">解析対象となるブロック</h3>
+    <ul>
+      <li>同一 workspace 内の <strong>Message ブロック（最大 4 引数）</strong></li>
+      <li>すべての <strong>Text ブロック</strong></li>
+      <li><strong>variables に定義されたカスタム変数</strong></li>
+      <li><strong>AppendToArray / SetVariable</strong> ブロック構造</li>
+    </ul>
+
+    <h3 class="section-subtitle">内部的に保持される情報</h3>
+    <p>既存ブロックの抽出結果は、以下のような形で構造化されます。</p>
+    <ul>
+      <li><code>id</code> … ブロック ID</li>
+      <li><code>value</code> … ブロック内の文字列</li>
+      <li><code>ref</code> … JSON 上の元ブロックデータ</li>
+      <li><code>messageBlockId</code> … 所属する Message ブロックの ID</li>
+      <li><code>argIndex</code> … Message ブロックの何番目の引数か</li>
+      <li>Text ブロックの場合は「Text」として UI 上で区別</li>
+    </ul>
+
+    <div class="notice">
+      <div class="notice-icon">⚠</div>
+      <div>
+        <strong>不正な JSON 形式の場合</strong><br>
+        構文エラーや Portal と異なる形式の JSON を読み込むと警告が表示されます。Portal から再度エクスポートしたファイルを使用してください。
+      </div>
+    </div>
+  </section>
+
+  <!-- 文言データを貼り付ける -->
+  <section id="input" class="section">
+    <h2 class="section-title">3. 文言データを貼り付ける</h2>
+
+    <div class="img-frame">
+      <p class="img-caption">図3：文言データ貼り付けエリア</p>
+      <!-- TODO: 実際のパスに差し替えてください -->
+      <img width="350" src="images/howto_image3.webp" alt="文言データ入力欄">
+    </div>
+
+    <p>次に、更新や生成に使用する文言データを貼り付けます。<br>
+      スプレッドシートやテキストファイルからコピーした内容を、そのまま入力欄にペーストできます。</p>
+
+    <h3 class="section-subtitle">対応している入力フォーマット</h3>
+    <ul>
+      <li><strong>スプレッドシートの「水平コピー」</strong> … タブ区切り（TSV）</li>
+      <li><strong>スプレッドシートの「縦コピー」</strong> … 改行区切り</li>
+      <li><strong>カンマ区切り</strong> … CSV 形式</li>
+      <li><strong>整形済みテキスト</strong> … 1 行 1 文言など</li>
+    </ul>
+
+    <p>貼り付け後、ツールが自動で文言を解析し、アコーディオン形式の一覧として表示します。</p>
+
+    <pre><code>▼ 文言一覧（12 件）
+  - "Game Start!"
+  - "Match Ready"
+  - "Victory"
+  …</code></pre>
+
+    <div class="note">
+      スプレッドシートからコピーする際は、書式ではなく「値のみコピー」することをおすすめします。改行・タブなどの制御文字が紛れ込むと、意図しない区切り方になることがあります。
+    </div>
+  </section>
+
+  <!-- 新規ブロック追加モード -->
+  <section id="newblocks" class="section">
+    <h2 class="section-title">4. 新規ブロック追加モード</h2>
+
+    <div class="img-frame">
+      <p class="img-caption">図4：モード選択（新規ブロック追加 / 既存ブロック更新）</p>
+      <!-- TODO: 実際のパスに差し替えてください -->
+      <img width="350" src="images/howto_image4.webp" alt="モード選択ボタン">
+    </div>
+
+    <p>「<strong>新規ブロック追加モード</strong>」では、貼り付けた文言データから、AppendToArray や Message ブロックなどをまとめて自動生成し、workspace.json に追加できます。</p>
+
+    <h3 class="section-subtitle">4-1. 生成パターン一覧</h3>
+
+    <h4 class="section-subtitle">◆ パターン1：AppendToArray（EmptyArray から）</h4>
+    <p>空の配列からスタートし、文言を順番に追加していく構造を自動生成します。</p>
+    <pre><code>EmptyArray
+ └ AppendToArray "A"
+    └ AppendToArray "B"
+       └ AppendToArray "C"</code></pre>
+    <ul>
+      <li>1 文言 = 1 つの AppendToArray</li>
+      <li>ネストされた構造で配列に追加されます</li>
+      <li>ブロックの高さに応じて workspace 上で重ならないように自動配置</li>
+    </ul>
+
+    <div class="img-frame">
+      <p class="img-caption">図5：AppendToArray（EmptyArray 起点）の生成イメージ</p>
+      <img width="600" src="images/howto_image5.webp" alt="EmptyArray から AppendToArray 生成">
+    </div>
+
+    <h4 class="section-subtitle">◆ パターン2：AppendToArray（既存変数から）</h4>
+    <p>既に存在する配列変数を起点に、文言を追加していく構造を生成します。</p>
+    <pre><code>GetVariable varX
+ └ AppendToArray "A"
+    └ AppendToArray "B"
+       └ AppendToArray "C"</code></pre>
+    <ul>
+      <li><strong>GetVariable</strong> ブロックから開始</li>
+      <li>既存配列に追記するイメージで AppendToArray を連続生成</li>
+      <li>必要に応じて <strong>SetVariable varX</strong> の第二引数に割り当てて保存するオプション有り</li>
+    </ul>
+
+    <div class="img-frame">
+      <p class="img-caption">図6：既存変数からの AppendToArray 生成イメージ</p>
+      <img width="450" src="images/howto_image6.webp" alt="既存変数から AppendToArray 生成">
+    </div>
+
+    <h4 class="section-subtitle">◆ パターン3：Message ブロック</h4>
+    <p>1 件の文言につき、1 つの Message ブロックを生成します。</p>
+    <pre><code>Message("Your Text Here")</code></pre>
+    <ul>
+      <li>1 文言 = 1 ブロックとして自動生成</li>
+      <li>Message の第 1 引数に text を設定</li>
+      <li>複数件を一括生成可能</li>
+    </ul>
+
+    <div class="img-frame">
+      <p class="img-caption">図7：Message ブロック一括生成イメージ</p>
+      <img width="450" src="images/howto_image7.webp" alt="Message ブロック自動生成">
+    </div>
+
+    <h3 class="section-subtitle">4-2. 挿入位置の指定</h3>
+    <div class="img-frame">
+      <img width="400" src="images/howto_image13.webp" alt="ブロック挿入位置">
+    </div>
+    <p>jsonファイル出力時に生成するブロックを workspace 内のどこに配置するかを指定できます。</p>
+    <ul>
+      <li><strong>最上部に追加</strong> … 既存のブロックの中で一番上にあるブロックの上にまとめて配置</li>
+      <li><strong>最下部に追加</strong> … 既存のブロックの中で一番下にあるブロックの下にまとめて配置</li>
+    </ul>
+
+    <p>位置を選んでおくと、ツールが自動的に座標を調整し、既存ブロックと重なりにくいようオフセットを付けて配置します。</p>
+
+    <div class="note">
+      生成されるブロック量が非常に多い場合、Portal 側で多少の位置調整が必要になることがあります。
+    </div>
+  </section>
+
+  <!-- 既存ブロック更新モード -->
+  <section id="updateblocks" class="section">
+    <h2 class="section-title">5. 既存ブロック更新モード</h2>
+    <p>「<strong>既存ブロック更新モード</strong>」では、workspace 内にすでに存在する Message / Text ブロックの文言を、一括して新しい文言に置き換えることができます。<br>jsonファイル内で参照出来る各ブロックの固有のIDを用いて更新をかけるので間違ったブロックに変更が加えられることはありません。</p>
+
+    <div class="img-frame">
+      <p class="img-caption">図8：既存ブロック更新モードの画面構成</p>
+      <img width="350" src="images/howto_image8.webp" alt="既存ブロック更新モード画面">
+    </div>
+
+    <h3 class="section-subtitle">5-1. 画面構成のイメージ</h3>
+
+    <p>更新モードの UI は、次の 3 カラム構成になっています。</p>
+    <ul>
+      <li><strong>左：</strong>既存ブロック一覧（Message Arg1〜Arg4 / Text）</li>
+      <li><strong>中央：</strong>選択中のペア（既存文言 ←→ 新しい文言）</li>
+      <li><strong>右：</strong>文言データ一覧（ペーストしたテキスト）</li>
+    </ul>
+
+    <h3 class="section-subtitle">5-2. 左カラム：既存ブロック一覧</h3>
+    <div class="img-frame">
+      <p class="img-caption">図9：Blockly 風 UI による既存ブロック一覧</p>
+      <img width="900" src="images/howto_image9.webp" alt="左カラムの既存ブロック一覧">
+    </div>
+
+    <ul>
+      <li>Message ブロックの Arg1〜Arg4、Text ブロックを Blockly 風の見た目で表示</li>
+      <li>すでに文言データとペアリング済みのブロックは <strong>disabled</strong> 表示</li>
+      <li>ブロックの上にマウスを乗せると、<strong>ブロック ID がツールチップ表示</strong></li>
+    </ul>
+
+    <h3 class="section-subtitle">5-3. 右カラム：文言データ一覧</h3>
+    <div class="img-frame">
+      <p class="img-caption">図10：文言データ一覧</p>
+      <img width="900" src="images/howto_image10.webp" alt="右カラムの文言データ一覧">
+    </div>
+
+    <ul>
+      <li>貼り付けた文言データを 1 行ずつリスト表示</li>
+      <li>既存ブロックがまだ選択されていない場合は <strong>クリック不可</strong></li>
+      <li>既存の値と完全一致している文言は <strong>自動ハイライト</strong></li>
+      <li>クリックすると、現在選択中の既存ブロックとの「ペア」が作られる。選択した既存ブロックがクリック不可となるが反映/キャンセルを行うと再選択可能になる。</li>
+    </ul>
+
+    <h3 class="section-subtitle">5-4. 中央エリア：選択中のペア</h3>
+    <div class="img-frame">
+      <img width="900" src="images/howto_image11.webp" alt="選択中ペア">
+    </div>
+    <pre><code>既存の値: "Ammo_Flechette"
+新しい値: "Ammo_Buckshot"</code></pre>
+
+    <p>中央には、現在編集中の「既存ブロック」と「新しい文言」のペアが表示されます。</p>
+    <ul>
+      <li><strong>キャンセルボタン</strong> … ペアを解除し、元の状態に戻す</li>
+      <li><strong>反映ボタン</strong> … 選択中の 1 件だけに変更を反映</li>
+    </ul>
+
+    <p>反映後は、左側の既存ブロック一覧の表示も更新され、<br>
+      そのブロックを改めて選択し直すこともできます。</p>
+
+    <h3 class="section-subtitle">5-5. 直接編集エリア</h3>
+    <div class="img-frame">
+      <img width="900" src="images/howto_image12.webp" alt="直接編集エリア">
+    </div>
+    <p>既存ブロックを選択した直後は、文言データとペアリングする前に、<strong>直接文字列を入力して更新</strong>することもできます。</p>
+    <ul>
+      <li>テキスト入力欄に新しい文字列を入力</li>
+      <li>「変更」ボタンを押すと、そのブロックだけ即時更新</li>
+      <li>変更ボタンを押す前に右カラムで文言データを選択すると、この直接編集エリアは自動的に非表示になります</li>
+    </ul>
+
+    <div class="note">
+      直接編集は「文言データ側に存在しない例外的な文言」を修正するのに便利です。基本的には、スプレッドシート等のデータを正とし、ペアリングで更新していく運用をおすすめします。
+    </div>
+  </section>
+
+  <!-- Portal への反映 -->
+  <section id="export" class="section">
+    <h2 class="section-title">6. Portal への反映（workspace.json のエクスポート）</h2>
+    <div class="img-frame">
+      <img width="600" src="images/howto_image14.webp" alt="直接編集エリア">
+    </div>
+    <p>新規ブロックの追加や既存ブロックの更新が完了したら、更新済みの <code>workspace.json</code> をダウンロードし、Portal にインポートします。</p>
+
+    <ol>
+      <li>エクスポートボタンから <strong>更新済み workspace.json</strong> を取得</li>
+      <li>Battlefield Portal の ビジュアルエディター を開く</li>
+      <li>エディター右上の <strong>ワークスペースをインポート</strong> を選択</li>
+      <div class="img-frame">
+        <img width="800" src="images/howto_image15.webp" alt="直接編集エリア">
+      </div>
+      <li>先ほどダウンロードした <code>workspace_generatedもしくはupdated.json</code> を選ぶ</li>
+      <li>エディター上でブロックが更新されていることを確認</li>
+    </ol>
+
+    <div class="notice">
+      <div class="notice-icon">⚠</div>
+      <div>
+        <strong>インポート後の上書きに注意してください。</strong><br>
+        Portal 上で直接ブロックを編集したあと、再度このツールを使う場合は、必ず最新の状態で再エクスポートした workspace.json を読み込んでください。
+      </div>
+    </div>
+  </section>
+
+  <!-- FAQ -->
+  <section id="faq" class="section">
+    <h2 class="section-title">7. よくある質問（FAQ）</h2>
+
+    <div class="faq-item">
+      <div class="faq-q">Q. 解析に失敗しました / エラーが表示されます。</div>
+      <div class="faq-a">
+        A. Portal からエクスポートした <strong>最新版の workspace.json</strong> を使用しているか確認してください。<br>
+        テキストエディタで手動編集した JSON や、別ツールで加工した JSON は読み込めない場合があります。
+      </div>
+    </div>
+
+    <div class="faq-item">
+      <div class="faq-q">Q. 文言データがうまく区切られません。</div>
+      <div class="faq-a">
+        A. スプレッドシートからコピーする際は「値のみコピー」を使用してください。セル内改行やカンマが含まれていると、意図しない分割が起こることがあります。
+      </div>
+    </div>
+
+    <div class="faq-item">
+      <div class="faq-q">Q. 既存ブロックが一覧に出てきません。</div>
+      <div class="faq-a">
+        A. サポート対象は <strong>Message ブロック（最大 4 引数）</strong> と <strong>Text ブロック</strong> です。Portal の更新によりブロック構造が変わった場合は、ツール側のアップデートが必要になることがあります。
+      </div>
+    </div>
+
+    <div class="faq-item">
+      <div class="faq-q">Q. 生成されたブロック同士が Portal 上で重なって見えます。</div>
+      <div class="faq-a">
+        A. ツール側で自動オフセットは行っていますが、大量にブロックを生成するとどうしても重なってしまうことがあります。必要に応じて Portal 側で位置を微調整してください。
+      </div>
+    </div>
+
+    <div class="faq-item">
+      <div class="faq-q">Q. データはどこかのサーバーに送信されますか？</div>
+      <div class="faq-a">
+        A. いいえ。workspace.json や文言データの解析は <strong>ブラウザ内で完結</strong>しており、外部サーバーに送信されることはありません。
+      </div>
+    </div>
+  </section>
+
+  <!-- トラブルシューティング -->
+  <section id="troubleshoot" class="section">
+    <h2 class="section-title">8. トラブルシューティング</h2>
+
+    <h3 class="section-subtitle">8-1. workspace.json が読み込めない</h3>
+    <ul>
+      <li>ファイルが Portal から出力された JSON であるか確認してください。</li>
+      <li>テキストエディタで開いた際、途中で途切れていないか確認してください。</li>
+      <li>別バージョンの Portal からエクスポートした JSON を混在させていないか確認してください。</li>
+    </ul>
+
+    <h3 class="section-subtitle">8-2. 文言が Portal 側に反映されない</h3>
+    <ul>
+      <li>更新後の <code>workspace.json</code> を Portal にインポートしたか再確認してください。</li>
+      <li>Portal のブラウザタブを更新（リロード）して、キャッシュが残っていないか確認してください。</li>
+    </ul>
+
+    <h3 class="section-subtitle">8-3. 変数が一覧に出てこない</h3>
+    <ul>
+      <li>ツールは <strong>variables に定義されているカスタム変数</strong>を解析します。</li>
+      <li>Portal 側で変数を新しく追加したときは、一度保存してから再度 workspace.json をエクスポートし直してください。</li>
+    </ul>
+  </section>
+
+  <!-- 用語集 -->
+  <section id="glossary" class="section">
+    <h2 class="section-title">9. 用語集</h2>
+    <table>
+      <thead>
+      <tr>
+        <th>用語</th>
+        <th>説明</th>
+      </tr>
+      </thead>
+      <tbody>
+      <tr>
+        <td>workspace.json</td>
+        <td>Portal の ビジュアルエディター上のブロック配置を丸ごと保存した JSON ファイル。</td>
+      </tr>
+      <tr>
+        <td>Message ブロック</td>
+        <td>ゲーム内のメッセージ表示などで使用される、文字列引数付きのブロック。</td>
+      </tr>
+      <tr>
+        <td>Text ブロック</td>
+        <td>1 行のテキスト値を表す基本ブロック。Message ブロックの引数などで使用される。</td>
+      </tr>
+      <tr>
+        <td>AppendToArray</td>
+        <td>配列に要素（文字列など）を追加するブロック。</td>
+      </tr>
+      <tr>
+        <td>SetVariable / GetVariable</td>
+        <td>変数に値を保存 / 変数から値を取得するためのブロック。</td>
+      </tr>
+      </tbody>
+    </table>
+  </section>
+
+  <!-- 作成者 -->
+  <section id="creator" class="section">
+    <h2 class="section-title">10. 作成者について</h2>
+    <p>hekaron<br>BF2042/BF6のPortalでエクスペリエンスを作成しています。制作支援ツールも合間に作成しています。</p>
+    <p><a href="https://github.com/hekaron">Github</a> / <a href="https://www.youtube.com/channel/UCggSXSjhm_zLcRVSYeeI09A/">Youtube</a></p>
+    <p></p>
+  </section>
+
+</main>
+
+</body>
+</html>
